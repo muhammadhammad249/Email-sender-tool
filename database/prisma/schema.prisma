@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../backend/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// -----------------------------------------------------------------------------
+// Core Models
+// -----------------------------------------------------------------------------
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  role           String    @default("USER")
+  isVerified     Boolean   @default(false)
+  otpCode        String?
+  otpExpiresAt   DateTime?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  auditLogs      AuditLog[]
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users     User[]
+  leads     Lead[]
+  campaigns Campaign[]
+  emailAccounts EmailAccount[]
+}
+
+
+
+// -----------------------------------------------------------------------------
+// Lead Management
+// -----------------------------------------------------------------------------
+
+model Lead {
+  id                String    @id @default(uuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  
+  firstName         String?
+  lastName          String?
+  fullName          String?
+  jobTitle          String?
+  email             String
+  phone             String?
+  
+  companyName       String?
+  companyWebsite    String?
+  domain            String?
+  industry          String?
+  location          String?
+  companySize       String?
+  
+  source            String?
+  sourceIdentifier  String?
+  linkedInUrl       String?
+  
+  verificationStatus String @default("UNVERIFIED")
+  leadScore         Int @default(0)
+  confidence        Int?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  enrichmentData    LeadEnrichment[]
+  campaigns         CampaignRecipient[]
+  replies           Reply[]
+}
+
+
+
+model LeadEnrichment {
+  id          String   @id @default(uuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  provider    String
+  data        String
+  confidence  Int?
+  createdAt   DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// Campaigns and Outreach
+// -----------------------------------------------------------------------------
+
+model Campaign {
+  id             String    @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  status         String @default("DRAFT")
+  
+  timezone       String    @default("UTC")
+  dailyLimit     Int       @default(100)
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  steps          CampaignStep[]
+  recipients     CampaignRecipient[]
+}
+
+
+
+model CampaignStep {
+  id             String    @id @default(uuid())
+  campaignId     String
+  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sequence       Int
+  subject        String
+  contentHtml    String
+  contentPlain   String
+  delayDays      Int       @default(0) // 0 for the first step
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  emailMessages  EmailMessage[]
+}
+
+model CampaignRecipient {
+  id             String    @id @default(uuid())
+  campaignId     String
+  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId         String
+  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  status         String @default("PENDING")
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  emailMessages  EmailMessage[]
+}
+
+
+
+// -----------------------------------------------------------------------------
+// Email Integration & Tracking
+// -----------------------------------------------------------------------------
+
+model EmailAccount {
+  id             String    @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  fromName       String
+  fromEmail      String
+  replyTo        String?
+  
+  smtpHost       String
+  smtpPort       Int
+  smtpSecure     Boolean   @default(true)
+  smtpUser       String
+  smtpPassword   String    // Must be encrypted before saving
+  
+  isActive       Boolean   @default(true)
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  emailMessages  EmailMessage[]
+}
+
+model EmailMessage {
+  id                  String    @id @default(uuid())
+  campaignStepId      String?
+  campaignStep        CampaignStep? @relation(fields: [campaignStepId], references: [id])
+  campaignRecipientId String?
+  campaignRecipient   CampaignRecipient? @relation(fields: [campaignRecipientId], references: [id])
+  emailAccountId      String
+  emailAccount        EmailAccount @relation(fields: [emailAccountId], references: [id])
+  
+  messageId           String?   // SMTP message ID
+  status              String @default("QUEUED")
+  sentAt              DateTime?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  events              EmailEvent[]
+}
+
+
+
+model EmailEvent {
+  id             String    @id @default(uuid())
+  emailMessageId String
+  emailMessage   EmailMessage @relation(fields: [emailMessageId], references: [id], onDelete: Cascade)
+  eventType      String
+  metadata       String?
+  createdAt      DateTime  @default(now())
+}
+
+
+
+model Reply {
+  id             String    @id @default(uuid())
+  leadId         String
+  lead           Lead      @relation(fields: [leadId], references: [id])
+  messageId      String?
+  content        String
+  receivedAt     DateTime  @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// System & Audit
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  entityType  String
+  entityId    String?
+  details     String?
+  createdAt   DateTime @default(now())
+}
