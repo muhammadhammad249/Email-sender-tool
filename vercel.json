@@ -1,26 +1,11 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/api/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "backend/src/**",
-          "database/prisma/**"
-        ],
-        "maxDuration": 30
-      }
+  "services": {
+    "frontend": {
+      "root": ".",
+      "framework": "nextjs"
     },
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
+    "backend": {
+      "root": "backend"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend/api/index.ts"
-    }
-  ]
+  }
 }
