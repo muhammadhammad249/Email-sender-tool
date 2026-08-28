@@ -25,7 +25,7 @@ export class LeadController {
 
   async getLead(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const id = String(req.params.id);
       const lead = await leadService.getLead(id);
       if (!lead) {
         return res.status(404).json({ status: 'ERROR', message: 'Lead not found' });

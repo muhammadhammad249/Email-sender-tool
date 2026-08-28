@@ -2,6 +2,14 @@ import { LeadRepository } from '../../repositories/leads/LeadRepository';
 import { Prisma } from '@prisma/client';
 import { NormalizationPipeline } from '../../utils/normalization';
 
+export interface CreateLeadData {
+  organizationId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+}
+
 export class LeadService {
   private leadRepository: LeadRepository;
 
@@ -9,16 +17,33 @@ export class LeadService {
     this.leadRepository = new LeadRepository();
   }
 
-  async createLead(data: Prisma.LeadCreateInput) {
+  async createLead(data: CreateLeadData) {
+    const { organizationId, ...leadData } = data;
+
     const normalizedData = {
-      ...data,
-      email: NormalizationPipeline.normalizeEmail(data.email),
-      firstName: data.firstName ? NormalizationPipeline.normalizeName(data.firstName) : undefined,
-      lastName: data.lastName ? NormalizationPipeline.normalizeName(data.lastName) : undefined,
-      companyName: data.companyName ? NormalizationPipeline.normalizeCompanyName(data.companyName) : undefined,
-      domain: data.domain ? NormalizationPipeline.normalizeDomain(data.domain) : undefined,
+      ...leadData,
+      email: NormalizationPipeline.normalizeEmail(leadData.email),
+      firstName: leadData.firstName
+        ? NormalizationPipeline.normalizeName(leadData.firstName)
+        : undefined,
+      lastName: leadData.lastName
+        ? NormalizationPipeline.normalizeName(leadData.lastName)
+        : undefined,
+      companyName: leadData.companyName
+        ? NormalizationPipeline.normalizeCompanyName(leadData.companyName)
+        : undefined,
     };
-    return this.leadRepository.createLead(normalizedData);
+
+    const prismaData: Prisma.LeadCreateInput = {
+      ...normalizedData,
+      organization: {
+        connect: {
+          id: organizationId,
+        },
+      },
+    };
+
+    return this.leadRepository.createLead(prismaData);
   }
 
   async getLead(id: string) {

@@ -1,6 +1,12 @@
 import { CampaignRepository } from '../../repositories/campaigns/CampaignRepository';
 import { Prisma } from '@prisma/client';
 
+export interface CreateCampaignData {
+  organizationId: string;
+  name: string;
+  status: 'DRAFT' | 'SCHEDULED' | 'RUNNING' | 'COMPLETED' | 'PAUSED';
+}
+
 export class CampaignService {
   private campaignRepository: CampaignRepository;
 
@@ -8,8 +14,19 @@ export class CampaignService {
     this.campaignRepository = new CampaignRepository();
   }
 
-  async createCampaign(data: Prisma.CampaignCreateInput) {
-    return this.campaignRepository.createCampaign(data);
+  async createCampaign(data: CreateCampaignData) {
+    const { organizationId, ...campaignData } = data;
+
+    const prismaData: Prisma.CampaignCreateInput = {
+      ...campaignData,
+      organization: {
+        connect: {
+          id: organizationId,
+        },
+      },
+    };
+
+    return this.campaignRepository.createCampaign(prismaData);
   }
 
   async getCampaign(id: string) {

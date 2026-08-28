@@ -23,7 +23,7 @@ export class CampaignController {
 
   async getCampaign(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const id = String(req.params.id);
       const campaign = await campaignService.getCampaign(id);
       if (!campaign) {
         return res.status(404).json({ status: 'ERROR', message: 'Campaign not found' });
