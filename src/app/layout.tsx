@@ -10,17 +10,19 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://email-sender-tool-jet.vercel.app';
+
 export const metadata: Metadata = {
   title: 'OutreachPro | Intelligent Sales Automation',
   description: 'AI-powered lead discovery and email outreach platform.',
   openGraph: {
     title: 'OutreachPro | Intelligent Sales Automation',
     description: 'AI-powered lead discovery and email outreach platform.',
-    url: 'https://outreachpro.vercel.app', // Update this with your actual vercel domain
+    url: appUrl,
     siteName: 'OutreachPro',
     images: [
       {
-        url: 'https://outreachpro.vercel.app/og-image.jpg', // Make sure to add this image to your public folder
+        url: `${appUrl}/og-image.jpg`,
         width: 1200,
         height: 630,
       }
