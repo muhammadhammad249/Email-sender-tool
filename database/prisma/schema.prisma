@@ -30,175 +30,175 @@ model User {
 }
 
 model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  users     User[]
-  leads     Lead[]
-  campaigns Campaign[]
+  id            String         @id @default(uuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  users         User[]
+  leads         Lead[]
+  campaigns     Campaign[]
   emailAccounts EmailAccount[]
 }
 
 model Lead {
-  id                String    @id @default(uuid())
-  organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id])
-  
-  firstName         String?
-  lastName          String?
-  fullName          String?
-  jobTitle          String?
-  email             String
-  phone             String?
-  
-  companyName       String?
-  companyWebsite    String?
-  domain            String?
-  industry          String?
-  location          String?
-  companySize       String?
-  
-  source            String?
-  sourceIdentifier  String?
-  linkedInUrl       String?
-  
-  verificationStatus String @default("UNVERIFIED")
-  leadScore         Int @default(0)
-  confidence        Int?
-  
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                 String              @id @default(uuid())
+  organizationId     String
+  organization       Organization        @relation(fields: [organizationId], references: [id])
 
-  enrichmentData    LeadEnrichment[]
-  campaigns         CampaignRecipient[]
-  replies           Reply[]
+  firstName          String?
+  lastName           String?
+  fullName           String?
+  jobTitle           String?
+  email              String
+  phone              String?
+
+  companyName        String?
+  companyWebsite     String?
+  domain             String?
+  industry           String?
+  location           String?
+  companySize        String?
+
+  source             String?
+  sourceIdentifier   String?
+  linkedInUrl        String?
+
+  verificationStatus String              @default("UNVERIFIED")
+  leadScore          Int                 @default(0)
+  confidence         Int?
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  enrichmentData     LeadEnrichment[]
+  campaigns          CampaignRecipient[]
+  replies            Reply[]
 }
 
 model LeadEnrichment {
-  id          String   @id @default(uuid())
-  leadId      String
-  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  provider    String
-  data        String
-  confidence  Int?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  provider   String
+  data       String
+  confidence Int?
+  createdAt  DateTime @default(now())
 }
 
 model Campaign {
-  id             String    @id @default(uuid())
+  id             String              @id @default(uuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization        @relation(fields: [organizationId], references: [id])
   name           String
-  status         String @default("DRAFT")
-  
-  timezone       String    @default("UTC")
-  dailyLimit     Int       @default(100)
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  status         String              @default("DRAFT")
+
+  timezone       String              @default("UTC")
+  dailyLimit     Int                 @default(100)
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   steps          CampaignStep[]
   recipients     CampaignRecipient[]
 }
 
 model CampaignStep {
-  id             String    @id @default(uuid())
-  campaignId     String
-  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  sequence       Int
-  subject        String
-  contentHtml    String
-  contentPlain   String
-  delayDays      Int       @default(0)
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  
-  emailMessages  EmailMessage[]
+  id           String          @id @default(uuid())
+  campaignId   String
+  campaign     Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sequence     Int
+  subject      String
+  contentHtml  String
+  contentPlain String
+  delayDays    Int             @default(0)
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  emailMessages EmailMessage[]
 }
 
 model CampaignRecipient {
-  id             String    @id @default(uuid())
-  campaignId     String
-  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  leadId         String
-  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  status         String @default("PENDING")
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id            String         @id @default(uuid())
+  campaignId    String
+  campaign     Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId        String
+  lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  status        String         @default("PENDING")
 
-  emailMessages  EmailMessage[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  emailMessages EmailMessage[]
 }
 
 model EmailAccount {
-  id             String    @id @default(uuid())
+  id             String         @id @default(uuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization   @relation(fields: [organizationId], references: [id])
   fromName       String
   fromEmail      String
   replyTo        String?
-  
+
   smtpHost       String
   smtpPort       Int
-  smtpSecure     Boolean   @default(true)
+  smtpSecure     Boolean        @default(true)
   smtpUser       String
   smtpPassword   String
-  
-  isActive       Boolean   @default(true)
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  
+
+  isActive       Boolean        @default(true)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
   emailMessages  EmailMessage[]
 }
 
 model EmailMessage {
-  id                  String    @id @default(uuid())
+  id                  String             @id @default(uuid())
   campaignStepId      String?
-  campaignStep        CampaignStep? @relation(fields: [campaignStepId], references: [id])
+  campaignStep        CampaignStep?      @relation(fields: [campaignStepId], references: [id])
   campaignRecipientId String?
   campaignRecipient   CampaignRecipient? @relation(fields: [campaignRecipientId], references: [id])
   emailAccountId      String
-  emailAccount        EmailAccount @relation(fields: [emailAccountId], references: [id])
-  
+  emailAccount        EmailAccount       @relation(fields: [emailAccountId], references: [id])
+
   messageId           String?
-  status              String @default("QUEUED")
+  status              String             @default("QUEUED")
   sentAt              DateTime?
-  
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
   events              EmailEvent[]
 }
 
 model EmailEvent {
-  id             String    @id @default(uuid())
+  id             String        @id @default(uuid())
   emailMessageId String
-  emailMessage   EmailMessage @relation(fields: [emailMessageId], references: [id], onDelete: Cascade)
+  emailMessage   EmailMessage  @relation(fields: [emailMessageId], references: [id], onDelete: Cascade)
   eventType      String
   metadata       String?
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime      @default(now())
 }
 
 model Reply {
-  id             String    @id @default(uuid())
-  leadId         String
-  lead           Lead      @relation(fields: [leadId], references: [id])
-  messageId      String?
-  content        String
-  receivedAt     DateTime  @default(now())
+  id         String    @id @default(uuid())
+  leadId     String
+  lead       Lead      @relation(fields: [leadId], references: [id])
+  messageId  String?
+  content    String
+  receivedAt DateTime  @default(now())
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  action      String
-  entityType  String
-  entityId    String?
-  details     String?
-  createdAt   DateTime @default(now())
+  id         String    @id @default(uuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  details    String?
+  createdAt  DateTime  @default(now())
 }
