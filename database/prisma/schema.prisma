@@ -1,14 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../../backend/node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------
@@ -45,12 +41,6 @@ model Organization {
   emailAccounts EmailAccount[]
 }
 
-
-
-// -----------------------------------------------------------------------------
-// Lead Management
-// -----------------------------------------------------------------------------
-
 model Lead {
   id                String    @id @default(uuid())
   organizationId    String
@@ -86,8 +76,6 @@ model Lead {
   replies           Reply[]
 }
 
-
-
 model LeadEnrichment {
   id          String   @id @default(uuid())
   leadId      String
@@ -97,10 +85,6 @@ model LeadEnrichment {
   confidence  Int?
   createdAt   DateTime @default(now())
 }
-
-// -----------------------------------------------------------------------------
-// Campaigns and Outreach
-// -----------------------------------------------------------------------------
 
 model Campaign {
   id             String    @id @default(uuid())
@@ -119,8 +103,6 @@ model Campaign {
   recipients     CampaignRecipient[]
 }
 
-
-
 model CampaignStep {
   id             String    @id @default(uuid())
   campaignId     String
@@ -129,7 +111,7 @@ model CampaignStep {
   subject        String
   contentHtml    String
   contentPlain   String
-  delayDays      Int       @default(0) // 0 for the first step
+  delayDays      Int       @default(0)
   
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -151,12 +133,6 @@ model CampaignRecipient {
   emailMessages  EmailMessage[]
 }
 
-
-
-// -----------------------------------------------------------------------------
-// Email Integration & Tracking
-// -----------------------------------------------------------------------------
-
 model EmailAccount {
   id             String    @id @default(uuid())
   organizationId String
@@ -169,7 +145,7 @@ model EmailAccount {
   smtpPort       Int
   smtpSecure     Boolean   @default(true)
   smtpUser       String
-  smtpPassword   String    // Must be encrypted before saving
+  smtpPassword   String
   
   isActive       Boolean   @default(true)
   
@@ -188,7 +164,7 @@ model EmailMessage {
   emailAccountId      String
   emailAccount        EmailAccount @relation(fields: [emailAccountId], references: [id])
   
-  messageId           String?   // SMTP message ID
+  messageId           String?
   status              String @default("QUEUED")
   sentAt              DateTime?
   
@@ -197,8 +173,6 @@ model EmailMessage {
   
   events              EmailEvent[]
 }
-
-
 
 model EmailEvent {
   id             String    @id @default(uuid())
@@ -209,8 +183,6 @@ model EmailEvent {
   createdAt      DateTime  @default(now())
 }
 
-
-
 model Reply {
   id             String    @id @default(uuid())
   leadId         String
@@ -219,10 +191,6 @@ model Reply {
   content        String
   receivedAt     DateTime  @default(now())
 }
-
-// -----------------------------------------------------------------------------
-// System & Audit
-// -----------------------------------------------------------------------------
 
 model AuditLog {
   id          String   @id @default(uuid())
