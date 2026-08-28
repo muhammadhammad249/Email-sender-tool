@@ -5,7 +5,10 @@
       "src": "backend/api/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["backend/src/**", "database/prisma/**"],
+        "includeFiles": [
+          "backend/src/**",
+          "database/prisma/**"
+        ],
         "maxDuration": 30
       }
     },
@@ -14,10 +17,10 @@
       "use": "@vercel/next"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "/backend/api/index.ts"
+      "src": "/api/(.*)",
+      "dest": "/backend/api/index.ts"
     }
   ]
 }
