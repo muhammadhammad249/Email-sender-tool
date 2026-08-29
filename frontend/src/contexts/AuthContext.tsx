@@ -1,8 +1,16 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
+
 import { useRouter } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_URL = 'https://email-sender-backend-seven.vercel.app/api';
 
 interface User {
   id: string;
@@ -20,98 +28,246 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   verify: (email: string, otp: string) => Promise<void>;
-  register: (firstName: string, lastName: string, email: string, password: string, organizationName: string) => Promise<void>;
+  register: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    organizationName: string
+  ) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const router = useRouter();
 
-  // On mount, restore session from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedToken && storedUser) {
-      try {
+    try {
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('auth_user');
+
+      if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
       }
+    } catch (error) {
+      console.error('Failed to restore authentication:', error);
+
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+  const login = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      const response = await fetch(`${ API_URL } /auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Login failed');
+      const contentType = response.headers.get('content-type');
 
-    localStorage.setItem('auth_token', data.token);
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
-    setToken(data.token);
-    setUser(data.user);
-    router.push('/');
-  }, [router]);
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
 
-  const register = useCallback(async (firstName: string, lastName: string, email: string, password: string, organizationName: string) => {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstName, lastName, email, password, organizationName }),
-    });
+        console.error('Backend returned:', text);
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Registration failed');
+        throw new Error(
+          `Backend returned a non - JSON response(${ response.status })`
+        );
+      }
 
-    router.push(`/verify-otp?email=${encodeURIComponent(data.email || email)}`);
-  }, [router]);
+      const data = await response.json();
 
-  const verify = useCallback(async (email: string, otp: string) => {
-    const res = await fetch(`${API_URL}/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp }),
-    });
+      if (!response.ok) {
+        throw new Error(data?.message || 'Login failed');
+      }
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Verification failed');
+      if (!data?.token || !data?.user) {
+        throw new Error('Invalid login response from backend');
+      }
 
-    localStorage.setItem('auth_token', data.token);
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
-    setToken(data.token);
-    setUser(data.user);
-    router.push('/');
-  }, [router]);
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem(
+        'auth_user',
+        JSON.stringify(data.user)
+      );
+
+      setToken(data.token);
+      setUser(data.user);
+
+      router.push('/');
+    },
+    [router]
+  );
+
+  const register = useCallback(
+    async (
+      firstName: string,
+      lastName: string,
+      email: string,
+      password: string,
+      organizationName: string
+    ): Promise<void> => {
+      const response = await fetch(
+        `${ API_URL } /auth/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            password,
+            organizationName,
+          }),
+        }
+      );
+
+      const contentType = response.headers.get('content-type');
+
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+
+        console.error('Backend returned:', text);
+
+        throw new Error(
+          `Backend returned a non - JSON response(${ response.status })`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || 'Registration failed'
+        );
+      }
+
+      const registeredEmail = data?.email || email;
+
+      router.push(
+        `/ verify - otp ? email = ${
+  encodeURIComponent(
+    registeredEmail
+  )
+} `
+      );
+    },
+    [router]
+  );
+
+  const verify = useCallback(
+    async (email: string, otp: string): Promise<void> => {
+      const response = await fetch(
+        `${ API_URL } /auth/verify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            otp,
+          }),
+        }
+      );
+
+      const contentType = response.headers.get('content-type');
+
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+
+        console.error('Backend returned:', text);
+
+        throw new Error(
+          `Backend returned a non - JSON response(${ response.status })`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || 'Verification failed'
+        );
+      }
+
+      if (!data?.token || !data?.user) {
+        throw new Error(
+          'Invalid verification response from backend'
+        );
+      }
+
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem(
+        'auth_user',
+        JSON.stringify(data.user)
+      );
+
+      setToken(data.token);
+      setUser(data.user);
+
+      router.push('/');
+    },
+    [router]
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+
     setToken(null);
     setUser(null);
+
     router.push('/login');
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, verify, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        login,
+        verify,
+        register,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error(
+      'useAuth must be used within AuthProvider'
+    );
+  }
+
+  return context;
 }

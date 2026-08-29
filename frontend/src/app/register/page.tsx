@@ -24,8 +24,9 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await register(firstName, lastName, email, password, organizationName);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +51,7 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-extrabold text-[#F8FAFC] tracking-tight">
             Outreach<span className="text-[#3B82F6]">Pro</span>
           </h1>
-          <p className="mt-2 text-[#94A3B8] text-sm">Create your workspace — it's free</p>
+          <p className="mt-2 text-[#94A3B8] text-sm">Create your workspace — it&apos;s free</p>
         </div>
 
         {/* Card */}

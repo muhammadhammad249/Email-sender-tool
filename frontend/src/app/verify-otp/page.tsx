@@ -14,7 +14,7 @@ function VerifyOTPContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
-  const [canResend, setCanResend] = useState(false);
+  const canResend = countdown <= 0;
 
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
@@ -24,7 +24,6 @@ function VerifyOTPContent() {
   // Countdown timer
   useEffect(() => {
     if (countdown <= 0) {
-      setCanResend(true);
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
@@ -42,8 +41,9 @@ function VerifyOTPContent() {
     setIsLoading(true);
     try {
       await verify(email, otp);
-    } catch (err: any) {
-      setError(err.message || 'Invalid verification code.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid verification code.';
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
@@ -64,9 +64,9 @@ function VerifyOTPContent() {
       setSuccess('New code sent! Check your email.');
       setOtp('');
       setCountdown(RESEND_COOLDOWN);
-      setCanResend(false);
-    } catch (err: any) {
-      setError(err.message || 'Failed to resend. Try again.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to resend. Try again.';
+      setError(errorMessage);
     } finally {
       setIsResending(false);
     }
