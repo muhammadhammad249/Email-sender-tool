@@ -1,6 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 type Account = {
   email: string;
   provider: string;
@@ -121,7 +123,7 @@ export default function EmailAccountsPage() {
                  onClick={async () => {
                    showToast(`Starting warmup for ${account.email}...`);
                    try {
-                     const res = await fetch('http://localhost:3001/api/email-accounts/warmup', {
+                     const res = await fetch(`${API_URL}/email-accounts/warmup`, {
                        method: 'POST',
                        headers: { 'Content-Type': 'application/json' },
                        body: JSON.stringify({ email: account.email })

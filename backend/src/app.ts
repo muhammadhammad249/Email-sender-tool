@@ -18,7 +18,7 @@ app.use(cors({
       process.env.FRONTEND_URL, // Set this in Vercel env vars
     ].filter(Boolean) as string[];
     // Allow requests with no origin (e.g., curl, Postman, server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: Origin ${origin} not allowed`));
