@@ -1,9 +1,10 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../../backend/node_modules/@prisma/client"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -12,7 +13,7 @@ datasource db {
 // -----------------------------------------------------------------------------
 
 model User {
-  id             String    @id @default(uuid())
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
   email          String    @unique
   passwordHash   String
   firstName      String
@@ -21,7 +22,7 @@ model User {
   isVerified     Boolean   @default(false)
   otpCode        String?
   otpExpiresAt   DateTime?
-  organizationId String?
+  organizationId String?   @db.ObjectId
   organization   Organization? @relation(fields: [organizationId], references: [id])
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -30,7 +31,7 @@ model User {
 }
 
 model Organization {
-  id            String         @id @default(uuid())
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -42,8 +43,8 @@ model Organization {
 }
 
 model Lead {
-  id                 String              @id @default(uuid())
-  organizationId     String
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId     String              @db.ObjectId
   organization       Organization        @relation(fields: [organizationId], references: [id])
 
   firstName          String?
@@ -77,8 +78,8 @@ model Lead {
 }
 
 model LeadEnrichment {
-  id         String   @id @default(uuid())
-  leadId     String
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId     String   @db.ObjectId
   lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   provider   String
   data       String
@@ -87,8 +88,8 @@ model LeadEnrichment {
 }
 
 model Campaign {
-  id             String              @id @default(uuid())
-  organizationId String
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String              @db.ObjectId
   organization   Organization        @relation(fields: [organizationId], references: [id])
   name           String
   status         String              @default("DRAFT")
@@ -104,8 +105,8 @@ model Campaign {
 }
 
 model CampaignStep {
-  id           String          @id @default(uuid())
-  campaignId   String
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId   String          @db.ObjectId
   campaign     Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   sequence     Int
   subject      String
@@ -120,10 +121,10 @@ model CampaignStep {
 }
 
 model CampaignRecipient {
-  id            String         @id @default(uuid())
-  campaignId    String
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId    String         @db.ObjectId
   campaign     Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  leadId        String
+  leadId        String         @db.ObjectId
   lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
   status        String         @default("PENDING")
 
@@ -134,8 +135,8 @@ model CampaignRecipient {
 }
 
 model EmailAccount {
-  id             String         @id @default(uuid())
-  organizationId String
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String         @db.ObjectId
   organization   Organization   @relation(fields: [organizationId], references: [id])
   fromName       String
   fromEmail      String
@@ -156,12 +157,12 @@ model EmailAccount {
 }
 
 model EmailMessage {
-  id                  String             @id @default(uuid())
-  campaignStepId      String?
+  id                  String             @id @default(auto()) @map("_id") @db.ObjectId
+  campaignStepId      String?            @db.ObjectId
   campaignStep        CampaignStep?      @relation(fields: [campaignStepId], references: [id])
-  campaignRecipientId String?
+  campaignRecipientId String?            @db.ObjectId
   campaignRecipient   CampaignRecipient? @relation(fields: [campaignRecipientId], references: [id])
-  emailAccountId      String
+  emailAccountId      String             @db.ObjectId
   emailAccount        EmailAccount       @relation(fields: [emailAccountId], references: [id])
 
   messageId           String?
@@ -175,8 +176,8 @@ model EmailMessage {
 }
 
 model EmailEvent {
-  id             String        @id @default(uuid())
-  emailMessageId String
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  emailMessageId String        @db.ObjectId
   emailMessage   EmailMessage  @relation(fields: [emailMessageId], references: [id], onDelete: Cascade)
   eventType      String
   metadata       String?
@@ -184,8 +185,8 @@ model EmailEvent {
 }
 
 model Reply {
-  id         String    @id @default(uuid())
-  leadId     String
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  leadId     String    @db.ObjectId
   lead       Lead      @relation(fields: [leadId], references: [id])
   messageId  String?
   content    String
@@ -193,8 +194,8 @@ model Reply {
 }
 
 model AuditLog {
-  id         String    @id @default(uuid())
-  userId     String?
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?   @db.ObjectId
   user       User?     @relation(fields: [userId], references: [id])
   action     String
   entityType String
