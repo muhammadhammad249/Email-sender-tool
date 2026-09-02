@@ -3,12 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:backend": "npm run dev --prefix backend",
-    "dev": "concurrently \"next dev\" \"npm run dev:backend\"",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "install:all": "npm install && npm install --prefix backend"
+    "lint": "eslint"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
