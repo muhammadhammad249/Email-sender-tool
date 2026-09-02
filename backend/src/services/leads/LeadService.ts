@@ -1,5 +1,4 @@
 import { LeadRepository } from '../../repositories/leads/LeadRepository';
-import { Prisma } from '@prisma/client';
 import { NormalizationPipeline } from '../../utils/normalization';
 
 export interface CreateLeadData {
@@ -34,7 +33,7 @@ export class LeadService {
         : undefined,
     };
 
-    const prismaData: Prisma.LeadCreateInput = {
+    const prismaData = {
       ...normalizedData,
       organization: {
         connect: {
@@ -54,7 +53,7 @@ export class LeadService {
     return this.leadRepository.getAllLeads(organizationId);
   }
 
-  async updateLead(id: string, data: Prisma.LeadUpdateInput) {
+  async updateLead(id: string, data: Record<string, unknown>) {
     return this.leadRepository.updateLead(id, data);
   }
 

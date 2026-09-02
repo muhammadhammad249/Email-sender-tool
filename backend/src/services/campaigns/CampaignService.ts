@@ -1,5 +1,4 @@
 import { CampaignRepository } from '../../repositories/campaigns/CampaignRepository';
-import { Prisma } from '@prisma/client';
 
 export interface CreateCampaignData {
   organizationId: string;
@@ -17,7 +16,7 @@ export class CampaignService {
   async createCampaign(data: CreateCampaignData) {
     const { organizationId, ...campaignData } = data;
 
-    const prismaData: Prisma.CampaignCreateInput = {
+    const prismaData = {
       ...campaignData,
       organization: {
         connect: {

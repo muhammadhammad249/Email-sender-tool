@@ -4,14 +4,7 @@ const backendUrl =
   process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
   'http://localhost:3001';
 
-
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   async rewrites() {
     return [
       {
