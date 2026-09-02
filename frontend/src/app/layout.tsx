@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopNavbar } from '@/components/layout/TopNavbar';
@@ -7,8 +6,6 @@ import { Footer } from '@/components/layout/Footer';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
-
-const inter = Inter({ subsets: ['latin'] });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://email-sender-tool-jet.vercel.app';
 
@@ -39,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.className} h-full min-h-screen bg-[#080D1A] text-[#F8FAFC] overflow-x-hidden antialiased selection:bg-[#3B82F6]/30`}>
+      <body className={`h-full min-h-screen bg-[#080D1A] text-[#F8FAFC] overflow-x-hidden antialiased selection:bg-[#3B82F6]/30`}>
         
         <AuthProvider>
           {/* Animated Background Blobs */}
