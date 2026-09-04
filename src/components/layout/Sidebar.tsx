@@ -38,7 +38,7 @@ export function Sidebar() {
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1 relative no-scrollbar">
         {menuItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
+          const isActive = pathname === item.path || (item.path !== '/' && (pathname ?? '').startsWith(item.path));
           
           return (
             <Link key={item.path} href={item.path} className="relative group block outline-none">

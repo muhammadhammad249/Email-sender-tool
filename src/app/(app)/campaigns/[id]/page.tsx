@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 
 export default function CampaignDetailsPage() {
   const params = useParams();
-  const campaignId = params.id as string;
+  const campaignId = (params?.id ?? '') as string;
   
   const [activeStep, setActiveStep] = useState(0);
   const [emailContent, setEmailContent] = useState('Hi {{firstName}},\n\nI noticed you are currently...');
