@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       email,
     }, { status: 201 });
   } catch (err: any) {
-    console.error('[POST /api/auth/register]', err);
-    return NextResponse.json({ message: 'Registration failed. Please try again.' }, { status: 500 });
+    console.error('[POST /api/auth/register]', err?.message, err?.code);
+    return NextResponse.json({ message: err?.message || 'Registration failed. Please try again.' }, { status: 500 });
   }
 }
