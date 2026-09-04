@@ -2,8 +2,15 @@ import { CampaignRepository } from '../../repositories/campaigns/CampaignReposit
 
 export interface CreateCampaignData {
   organizationId: string;
+
   name: string;
-  status: 'DRAFT' | 'SCHEDULED' | 'RUNNING' | 'COMPLETED' | 'PAUSED';
+
+  status:
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'RUNNING'
+  | 'COMPLETED'
+  | 'PAUSED';
 }
 
 export class CampaignService {
@@ -13,25 +20,34 @@ export class CampaignService {
     this.campaignRepository = new CampaignRepository();
   }
 
+  /**
+   * Create a new campaign
+   */
   async createCampaign(data: CreateCampaignData) {
-    const { organizationId, ...campaignData } = data;
+    const { organizationId, name, status } = data;
 
-    const prismaData = {
-      ...campaignData,
+    return this.campaignRepository.createCampaign({
+      name,
+      status,
+
       organization: {
         connect: {
           id: organizationId,
         },
       },
-    };
-
-    return this.campaignRepository.createCampaign(prismaData);
+    });
   }
 
+  /**
+   * Get campaign by ID
+   */
   async getCampaign(id: string) {
     return this.campaignRepository.getCampaignById(id);
   }
 
+  /**
+   * Get all campaigns for an organization
+   */
   async getAllCampaigns(organizationId: string) {
     return this.campaignRepository.getAllCampaigns(organizationId);
   }

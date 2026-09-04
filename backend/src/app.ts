@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { getErrorMessage } from './utils/errors';
 
 const app = express();
 
@@ -46,7 +47,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const status: number = typeof err?.status === 'number' ? err.status
     : typeof err?.statusCode === 'number' ? err.statusCode
     : 500;
-  const message: string = err?.message || 'Internal server error';
+  const message: string = getErrorMessage(err, 'Internal server error');
   res.status(status).json({ message });
 });
 

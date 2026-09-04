@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../../services/auth/AuthService';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
+import { getErrorMessage } from '../../utils/errors';
 
 const authService = new AuthService();
 
@@ -20,7 +21,7 @@ export class AuthController {
       const result = await authService.register({ firstName, lastName, email, password, organizationName });
       return res.status(201).json(result);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message || 'Registration failed.' });
+      return res.status(400).json({ message: getErrorMessage(err, 'Registration failed.') });
     }
   }
 
@@ -35,7 +36,7 @@ export class AuthController {
       const result = await authService.login({ email, password });
       return res.status(200).json(result);
     } catch (err: any) {
-      return res.status(401).json({ message: err.message || 'Login failed.' });
+      return res.status(401).json({ message: getErrorMessage(err, 'Login failed.') });
     }
   }
 
@@ -50,7 +51,7 @@ export class AuthController {
       const result = await authService.verifyOTP({ email, otp });
       return res.status(200).json(result);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message || 'Verification failed.' });
+      return res.status(400).json({ message: getErrorMessage(err, 'Verification failed.') });
     }
   }
 
@@ -61,7 +62,7 @@ export class AuthController {
       const result = await authService.resendOTP(email);
       return res.status(200).json(result);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message || 'Failed to resend code.' });
+      return res.status(400).json({ message: getErrorMessage(err, 'Failed to resend code.') });
     }
   }
 
@@ -74,7 +75,7 @@ export class AuthController {
       const user = await authService.getMe(userId);
       return res.status(200).json(user);
     } catch (err: any) {
-      return res.status(404).json({ message: err.message || 'User not found.' });
+      return res.status(404).json({ message: getErrorMessage(err, 'User not found.') });
     }
   }
 }

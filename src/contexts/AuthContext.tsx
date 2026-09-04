@@ -83,6 +83,9 @@ export function AuthProvider({
       if (!contentType?.includes('application/json')) {
         const text = await response.text();
         console.error('Backend returned non-JSON:', text);
+        if (response.status >= 500) {
+          throw new Error('The server is taking too long to respond. This might be a database connection issue. Please verify your MongoDB Atlas IP Whitelist or check server logs.');
+        }
         throw new Error(`Server error (${response.status}). Please try again.`);
       }
 
@@ -126,6 +129,9 @@ export function AuthProvider({
       if (!contentType?.includes('application/json')) {
         const text = await response.text();
         console.error('Backend returned non-JSON:', text);
+        if (response.status >= 500) {
+          throw new Error('The server is taking too long to respond. This might be a database connection issue. Please verify your MongoDB Atlas IP Whitelist or check server logs.');
+        }
         throw new Error(`Server error (${response.status}). Please try again.`);
       }
 
@@ -154,6 +160,9 @@ export function AuthProvider({
       if (!contentType?.includes('application/json')) {
         const text = await response.text();
         console.error('Backend returned non-JSON:', text);
+        if (response.status >= 500) {
+          throw new Error('The server is taking too long to respond. This might be a database connection issue. Please verify your MongoDB Atlas IP Whitelist or check server logs.');
+        }
         throw new Error(`Server error (${response.status}). Please try again.`);
       }
 
