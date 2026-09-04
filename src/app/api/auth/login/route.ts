@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error('[POST /api/auth/login]', err?.message, err?.code);
-    return NextResponse.json({ message: err?.message || 'Login failed. Please try again.' }, { status: 500 });
+    console.error('[POST /api/auth/login]', err);
+    return NextResponse.json({ message: 'Login failed. Please try again.' }, { status: 500 });
   }
 }
