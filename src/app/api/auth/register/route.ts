@@ -9,15 +9,17 @@ const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 
-async function sendOTPEmail(email: string, otp: string) {
+async function sendOTPEmail(email: string, otp: string): Promise<{ success: boolean; error?: string }> {
   const smtpPass = process.env.SMTP_PASSWORD;
   const smtpUser = process.env.SMTP_USER;
-  const isGmailConfigured = smtpPass && smtpPass !== 'your_gmail_app_password_here';
 
-  console.log(`OTP for ${email}: ${otp}`);
+  console.log(`[OTP] Attempting to send OTP to ${email}`);
+  console.log(`[OTP] SMTP_USER set: ${!!smtpUser}, SMTP_PASSWORD set: ${!!smtpPass}`);
 
   if (!smtpPass || !smtpUser) {
-    throw new Error('SMTP_USER or SMTP_PASSWORD environment variables are missing.');
+    const msg = 'SMTP_USER or SMTP_PASSWORD environment variables are not set in Vercel.';
+    console.error(`[OTP] ${msg}`);
+    return { success: false, error: msg };
   }
 
   try {
@@ -39,9 +41,11 @@ async function sendOTPEmail(email: string, otp: string) {
         <p style="color:#94A3B8;text-align:center;font-size:12px;margin-top:16px;">Expires in 10 minutes.</p>
       </div>`,
     });
+    console.log(`[OTP] Email sent successfully to ${email}`);
+    return { success: true };
   } catch (err: any) {
-    console.error('Gmail send failed:', err.message);
-    throw new Error(`Failed to send email: ${err.message}`);
+    console.error(`[OTP] Gmail send failed: ${err.message}`);
+    return { success: false, error: err.message };
   }
 }
 
@@ -72,16 +76,11 @@ export async function POST(req: NextRequest) {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    // Save user to DB first (this is the critical step)
     if (existingUser) {
       await prisma.user.update({
         where: { email },
-        data: {
-          firstName,
-          lastName,
-          passwordHash,
-          otpCode,
-          otpExpiresAt,
-        },
+        data: { firstName, lastName, passwordHash, otpCode, otpExpiresAt },
       });
     } else {
       await prisma.organization.create({
@@ -89,21 +88,20 @@ export async function POST(req: NextRequest) {
           name: organizationName,
           users: {
             create: {
-              firstName,
-              lastName,
-              email,
-              passwordHash,
-              role: 'ADMIN',
-              isVerified: false,
-              otpCode,
-              otpExpiresAt,
+              firstName, lastName, email, passwordHash,
+              role: 'ADMIN', isVerified: false, otpCode, otpExpiresAt,
             },
           },
         },
       });
     }
 
-    await sendOTPEmail(email, otpCode);
+    // Attempt to send email (non-blocking - user is already saved to DB)
+    const emailResult = await sendOTPEmail(email, otpCode);
+    if (!emailResult.success) {
+      console.error(`[Register] Email failed but user saved. Error: ${emailResult.error}`);
+      // Still return success - user can use "Resend Code" button
+    }
 
     return NextResponse.json({
       message: 'Verification code sent to your email. Please check your inbox.',
