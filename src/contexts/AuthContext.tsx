@@ -27,7 +27,6 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  verify: (email: string, otp: string) => Promise<void>;
   register: (
     firstName: string,
     lastName: string,
@@ -129,9 +128,6 @@ export function AuthProvider({
       if (!contentType?.includes('application/json')) {
         const text = await response.text();
         console.error('Backend returned non-JSON:', text);
-        if (response.status >= 500) {
-          throw new Error('The server is taking too long to respond. This might be a database connection issue. Please verify your MongoDB Atlas IP Whitelist or check server logs.');
-        }
         throw new Error(`Server error (${response.status}). Please try again.`);
       }
 
@@ -141,41 +137,11 @@ export function AuthProvider({
         throw new Error(data?.message || 'Registration failed');
       }
 
-      const registeredEmail = data?.email || email;
-      router.push(`/verify-otp?email=${encodeURIComponent(registeredEmail)}`);
-    },
-    [router]
-  );
-
-  const verify = useCallback(
-    async (email: string, otp: string): Promise<void> => {
-      const response = await fetch(`${API_URL}/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-      });
-
-      const contentType = response.headers.get('content-type');
-
-      if (!contentType?.includes('application/json')) {
-        const text = await response.text();
-        console.error('Backend returned non-JSON:', text);
-        if (response.status >= 500) {
-          throw new Error('The server is taking too long to respond. This might be a database connection issue. Please verify your MongoDB Atlas IP Whitelist or check server logs.');
-        }
-        throw new Error(`Server error (${response.status}). Please try again.`);
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.message || 'Verification failed');
-      }
-
       if (!data?.token || !data?.user) {
-        throw new Error('Invalid verification response from backend');
+        throw new Error('Invalid registration response from server');
       }
 
+      // Directly log in the user — no email verification needed
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
 
@@ -186,6 +152,7 @@ export function AuthProvider({
     },
     [router]
   );
+
 
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
@@ -204,7 +171,6 @@ export function AuthProvider({
         token,
         isLoading,
         login,
-        verify,
         register,
         logout,
       }}
