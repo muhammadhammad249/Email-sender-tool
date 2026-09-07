@@ -35,9 +35,8 @@ export async function POST(req: NextRequest) {
 
     const smtpPass = process.env.SMTP_PASSWORD;
     const smtpUser = process.env.SMTP_USER;
-    const isGmailConfigured = smtpPass && smtpPass !== 'your_gmail_app_password_here';
 
-    if (isGmailConfigured) {
+    if (smtpPass && smtpUser) {
       try {
         const transporter = nodemailer.createTransport({
           service: 'gmail',
@@ -47,11 +46,22 @@ export async function POST(req: NextRequest) {
           from: `"OutreachPro" <${smtpUser}>`,
           to: email,
           subject: '🔐 Your new OutreachPro Verification Code',
-          html: `<p>Your new code is: <strong>${otpCode}</strong>. Expires in 10 minutes.</p>`,
+          html: `<div style="font-family:Arial,sans-serif;padding:30px;max-width:560px;margin:0 auto;background:#080D1A;color:#F8FAFC;border-radius:16px;border:1px solid #1E293B;">
+            <h1 style="color:#F8FAFC;font-size:22px;text-align:center;">Outreach<span style="color:#3B82F6;">Pro</span></h1>
+            <h2 style="color:#F8FAFC;text-align:center;">New Verification Code</h2>
+            <p style="color:#94A3B8;text-align:center;">Your new verification code is:</p>
+            <div style="background:#1E293B;border-radius:12px;padding:24px;text-align:center;">
+              <div style="font-size:42px;font-weight:bold;letter-spacing:14px;color:#60A5FA;font-family:monospace;">${otpCode}</div>
+            </div>
+            <p style="color:#94A3B8;text-align:center;font-size:12px;margin-top:16px;">Expires in 10 minutes.</p>
+          </div>`,
         });
+        console.log(`[Resend] Email sent successfully to ${email}`);
       } catch (err: any) {
-        console.error('Gmail resend failed:', err.message);
+        console.error(`[Resend] Gmail send failed: ${err.message}`);
       }
+    } else {
+      console.error('[Resend] SMTP_USER or SMTP_PASSWORD not configured in Vercel.');
     }
 
     return NextResponse.json({ message: 'A new verification code has been sent to your email.' });
