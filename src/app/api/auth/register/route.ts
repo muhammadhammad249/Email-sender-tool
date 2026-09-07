@@ -8,19 +8,6 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefi
 const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// In-memory store for pending registrations (per serverless instance)
-interface PendingRegistration {
-  firstName: string;
-  lastName: string;
-  email: string;
-  passwordHash: string;
-  organizationName: string;
-  otpCode: string;
-  otpExpiresAt: Date;
-}
-const globalForPending = globalThis as unknown as { pendingRegistrations: Map<string, PendingRegistration> | undefined };
-const pendingRegistrations = globalForPending.pendingRegistrations ?? new Map<string, PendingRegistration>();
-if (process.env.NODE_ENV !== 'production') globalForPending.pendingRegistrations = pendingRegistrations;
 
 async function sendOTPEmail(email: string, otp: string) {
   const smtpPass = process.env.SMTP_PASSWORD;
@@ -70,19 +57,48 @@ export async function POST(req: NextRequest) {
     // Check if already verified
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return NextResponse.json(
-        { message: 'An account with this email is already registered and verified.' },
-        { status: 400 }
-      );
+      if (existingUser.isVerified) {
+        return NextResponse.json(
+          { message: 'An account with this email is already registered and verified.' },
+          { status: 400 }
+        );
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    pendingRegistrations.set(email, {
-      firstName, lastName, email, passwordHash, organizationName, otpCode, otpExpiresAt,
-    });
+    if (existingUser) {
+      await prisma.user.update({
+        where: { email },
+        data: {
+          firstName,
+          lastName,
+          passwordHash,
+          otpCode,
+          otpExpiresAt,
+        },
+      });
+    } else {
+      await prisma.organization.create({
+        data: {
+          name: organizationName,
+          users: {
+            create: {
+              firstName,
+              lastName,
+              email,
+              passwordHash,
+              role: 'ADMIN',
+              isVerified: false,
+              otpCode,
+              otpExpiresAt,
+            },
+          },
+        },
+      });
+    }
 
     await sendOTPEmail(email, otpCode);
 

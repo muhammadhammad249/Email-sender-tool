@@ -27,6 +27,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Invalid email or password.' }, { status: 401 });
     }
 
+    if (!user.isVerified) {
+      return NextResponse.json({ message: 'Please verify your email before logging in.' }, { status: 401 });
+    }
+
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json({ message: 'Invalid email or password.' }, { status: 401 });

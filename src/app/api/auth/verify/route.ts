@@ -9,19 +9,7 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefi
 const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Share the pending registrations map
-interface PendingRegistration {
-  firstName: string;
-  lastName: string;
-  email: string;
-  passwordHash: string;
-  organizationName: string;
-  otpCode: string;
-  otpExpiresAt: Date;
-}
-const globalForPending = globalThis as unknown as { pendingRegistrations: Map<string, PendingRegistration> | undefined };
-const pendingRegistrations = globalForPending.pendingRegistrations ?? new Map<string, PendingRegistration>();
-if (process.env.NODE_ENV !== 'production') globalForPending.pendingRegistrations = pendingRegistrations;
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,47 +19,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email and OTP are required.' }, { status: 400 });
     }
 
-    const pending = pendingRegistrations.get(email);
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { organization: true },
+    });
 
-    if (!pending) {
+    if (!user) {
       return NextResponse.json(
         { message: 'No pending registration found for this email. Please register again.' },
         { status: 400 }
       );
     }
 
-    if (pending.otpCode !== otp) {
+    if (user.isVerified) {
+      return NextResponse.json({ message: 'Account is already verified. Please login.' }, { status: 400 });
+    }
+
+    if (user.otpCode !== otp) {
       return NextResponse.json({ message: 'Invalid verification code. Please try again.' }, { status: 400 });
     }
 
-    if (pending.otpExpiresAt < new Date()) {
-      pendingRegistrations.delete(email);
+    if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
       return NextResponse.json(
         { message: 'Verification code has expired. Please register again.' },
         { status: 400 }
       );
     }
 
-    // Create user and org in DB
-    const org = await prisma.organization.create({
-      data: {
-        name: pending.organizationName,
-        users: {
-          create: {
-            firstName: pending.firstName,
-            lastName: pending.lastName,
-            email: pending.email,
-            passwordHash: pending.passwordHash,
-            role: 'ADMIN',
-            isVerified: true,
-          },
-        },
-      },
-      include: { users: true },
+    // Verify user in DB
+    const updatedUser = await prisma.user.update({
+      where: { email },
+      data: { isVerified: true, otpCode: null, otpExpiresAt: null },
+      include: { organization: true },
     });
 
-    const user = org.users[0];
-    pendingRegistrations.delete(email);
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
@@ -85,10 +66,10 @@ export async function POST(req: NextRequest) {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        organizationId: user.organizationId,
-        organizationName: org.name,
+        lastName: updatedUser.lastName,
+        role: updatedUser.role,
+        organizationId: updatedUser.organizationId,
+        organizationName: updatedUser.organization?.name,
       },
     });
   } catch (err: any) {

@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-interface PendingRegistration {
-  firstName: string;
-  lastName: string;
-  email: string;
-  passwordHash: string;
-  organizationName: string;
-  otpCode: string;
-  otpExpiresAt: Date;
-}
-const globalForPending = globalThis as unknown as { pendingRegistrations: Map<string, PendingRegistration> | undefined };
-const pendingRegistrations = globalForPending.pendingRegistrations ?? new Map<string, PendingRegistration>();
-if (process.env.NODE_ENV !== 'production') globalForPending.pendingRegistrations = pendingRegistrations;
+import { PrismaClient } from '@prisma/client';
 
+// Singleton Prisma client
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
@@ -22,8 +15,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email is required.' }, { status: 400 });
     }
 
-    const pending = pendingRegistrations.get(email);
-    if (!pending) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || user.isVerified) {
       return NextResponse.json(
         { message: 'No pending registration found. Please register again.' },
         { status: 400 }
@@ -32,7 +25,11 @@ export async function POST(req: NextRequest) {
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    pendingRegistrations.set(email, { ...pending, otpCode, otpExpiresAt });
+    
+    await prisma.user.update({
+      where: { email },
+      data: { otpCode, otpExpiresAt },
+    });
 
     console.log(`Resend OTP for ${email}: ${otpCode}`);
 
