@@ -16,29 +16,32 @@ async function sendOTPEmail(email: string, otp: string) {
 
   console.log(`OTP for ${email}: ${otp}`);
 
-  if (isGmailConfigured) {
-    try {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass },
-      });
-      await transporter.sendMail({
-        from: `"OutreachPro" <${smtpUser}>`,
-        to: email,
-        subject: '🔐 Your OutreachPro Verification Code',
-        html: `<div style="font-family:Arial,sans-serif;padding:30px;max-width:560px;margin:0 auto;background:#080D1A;color:#F8FAFC;border-radius:16px;border:1px solid #1E293B;">
-          <h1 style="color:#F8FAFC;font-size:22px;text-align:center;">Outreach<span style="color:#3B82F6;">Pro</span></h1>
-          <h2 style="color:#F8FAFC;text-align:center;">Email Verification</h2>
-          <p style="color:#94A3B8;text-align:center;">Use the code below to verify your account</p>
-          <div style="background:#1E293B;border-radius:12px;padding:24px;text-align:center;">
-            <div style="font-size:42px;font-weight:bold;letter-spacing:14px;color:#60A5FA;font-family:monospace;">${otp}</div>
-          </div>
-          <p style="color:#94A3B8;text-align:center;font-size:12px;margin-top:16px;">Expires in 10 minutes.</p>
-        </div>`,
-      });
-    } catch (err: any) {
-      console.error('Gmail send failed:', err.message);
-    }
+  if (!smtpPass || !smtpUser) {
+    throw new Error('SMTP_USER or SMTP_PASSWORD environment variables are missing.');
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+    await transporter.sendMail({
+      from: `"OutreachPro" <${smtpUser}>`,
+      to: email,
+      subject: '🔐 Your OutreachPro Verification Code',
+      html: `<div style="font-family:Arial,sans-serif;padding:30px;max-width:560px;margin:0 auto;background:#080D1A;color:#F8FAFC;border-radius:16px;border:1px solid #1E293B;">
+        <h1 style="color:#F8FAFC;font-size:22px;text-align:center;">Outreach<span style="color:#3B82F6;">Pro</span></h1>
+        <h2 style="color:#F8FAFC;text-align:center;">Email Verification</h2>
+        <p style="color:#94A3B8;text-align:center;">Use the code below to verify your account</p>
+        <div style="background:#1E293B;border-radius:12px;padding:24px;text-align:center;">
+          <div style="font-size:42px;font-weight:bold;letter-spacing:14px;color:#60A5FA;font-family:monospace;">${otp}</div>
+        </div>
+        <p style="color:#94A3B8;text-align:center;font-size:12px;margin-top:16px;">Expires in 10 minutes.</p>
+      </div>`,
+    });
+  } catch (err: any) {
+    console.error('Gmail send failed:', err.message);
+    throw new Error(`Failed to send email: ${err.message}`);
   }
 }
 
