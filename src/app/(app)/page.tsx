@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
+import { PageSearchBar } from '@/components/shared/PageSearchBar';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
@@ -56,11 +57,12 @@ export default function Dashboard() {
           </h1>
           <p className="mt-2 text-[#94A3B8]">Welcome back, Alex. Here's what's happening with your outreach today.</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleDownloadReport} className="px-4 py-2 bg-[#111827] border border-[#1E293B] hover:border-[#3B82F6]/50 text-[#F8FAFC] text-sm font-medium rounded-xl transition-all shadow-lg btn-press">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+          <PageSearchBar placeholder="Search overview..." />
+          <button onClick={handleDownloadReport} className="px-4 py-2 bg-[#111827] border border-[#1E293B] hover:border-[#3B82F6]/50 text-[#F8FAFC] text-sm font-medium rounded-xl transition-all shadow-lg btn-press whitespace-nowrap">
             Download Report
           </button>
-          <Link href="/campaigns" className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-sm font-medium rounded-xl transition-all flex items-center gap-2 btn-press">
+          <Link href="/campaigns" className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-sm font-medium rounded-xl transition-all flex items-center gap-2 btn-press whitespace-nowrap">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             New Campaign
           </Link>

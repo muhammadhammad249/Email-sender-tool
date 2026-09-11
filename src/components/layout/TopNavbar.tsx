@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function TopNavbar() {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -21,26 +20,8 @@ export function TopNavbar() {
   return (
     <header className="h-16 bg-[#080D1A]/80 backdrop-blur-md border-b border-[#1E293B] sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors">
       
-      {/* Left: Search Bar */}
-      <div className="flex-1 flex">
-        <div className={`relative transition-all duration-300 ease-out ${isSearchFocused ? 'w-full max-w-md' : 'w-full max-w-xs'}`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className={`h-4 w-4 transition-colors duration-200 ${isSearchFocused ? 'text-[#3B82F6]' : 'text-[#94A3B8]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            placeholder="Search leads, campaigns..."
-            className="block w-full pl-10 pr-3 py-2 border border-[#1E293B] rounded-lg leading-5 bg-[#111827] text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] sm:text-sm transition-all shadow-inner"
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-          />
-          <div className={`absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none transition-opacity ${isSearchFocused ? 'opacity-0' : 'opacity-100'}`}>
-            <span className="text-[#94A3B8] text-xs font-mono border border-[#1E293B] bg-[#151E30] rounded px-1.5 py-0.5">⌘K</span>
-          </div>
-        </div>
-      </div>
+      {/* Left: Spacer */}
+      <div className="flex-1" />
 
       {/* Right: Actions & Profile */}
       <div className="ml-4 flex items-center md:ml-6 gap-3">

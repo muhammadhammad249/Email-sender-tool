@@ -14,14 +14,25 @@ export interface Lead {
 
 interface LeadTableProps {
   leads: Lead[];
+  onDelete: (id: string) => void;
+  onSendEmail?: (lead: Lead) => void;
 }
 
-export function LeadTable({ leads }: LeadTableProps) {
+export function LeadTable({ leads, onDelete, onSendEmail }: LeadTableProps) {
   const [mounted, setMounted] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleDelete = (id: string) => {
+    setDeletingId(id);
+    setTimeout(() => {
+      onDelete(id);
+      setDeletingId(null);
+    }, 300);
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -38,7 +49,7 @@ export function LeadTable({ leads }: LeadTableProps) {
             <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Company</th>
             <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Status</th>
             <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Score</th>
-            <th scope="col" className="relative py-4 pl-3 pr-6"><span className="sr-only">Actions</span></th>
+            <th scope="col" className="relative py-4 pl-3 pr-6 text-right text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#1E293B] bg-[#111827]">
@@ -49,7 +60,7 @@ export function LeadTable({ leads }: LeadTableProps) {
                   <div className="w-12 h-12 rounded-full bg-[#151E30] flex items-center justify-center mb-4">
                     <svg className="w-6 h-6 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                   </div>
-                  No leads found. Start discovering leads to populate this table.
+                  No leads found. Add a lead manually or discover leads to populate this table.
                 </div>
               </td>
             </tr>
@@ -57,7 +68,7 @@ export function LeadTable({ leads }: LeadTableProps) {
             leads.map((lead, i) => (
               <tr 
                 key={lead.id} 
-                className="hover:bg-[#151E30] transition-colors duration-200 group animate-fade-in-up"
+                className={`hover:bg-[#151E30] transition-all duration-300 group animate-fade-in-up ${deletingId === lead.id ? 'opacity-0 scale-95' : 'opacity-100'}`}
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-[#F8FAFC]">
@@ -104,9 +115,26 @@ export function LeadTable({ leads }: LeadTableProps) {
                   </div>
                 </td>
                 <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">
-                  <button className="text-[#94A3B8] hover:text-[#3B82F6] transition-colors p-1.5 rounded-lg hover:bg-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                  </button>
+                  <div className="flex items-center justify-end gap-1">
+                    {onSendEmail && (
+                      <button
+                        onClick={() => onSendEmail(lead)}
+                        title="Send email"
+                        className="text-[#94A3B8] hover:text-[#3B82F6] transition-colors p-1.5 rounded-lg hover:bg-[#3B82F6]/10 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/30 opacity-0 group-hover:opacity-100"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleDelete(lead.id)}
+                      title="Delete lead"
+                      className="text-[#94A3B8] hover:text-[#EF4444] transition-colors p-1.5 rounded-lg hover:bg-[#EF4444]/10 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/30 opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))

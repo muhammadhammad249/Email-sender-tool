@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+const API_URL = '/api';
+
 export default function CampaignDetailsPage() {
   const params = useParams();
   const campaignId = (params?.id ?? '') as string;
@@ -10,10 +12,29 @@ export default function CampaignDetailsPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [emailContent, setEmailContent] = useState('Hi {{firstName}},\n\nI noticed you are currently...');
   const [aiState, setAiState] = useState<'IDLE' | 'ANALYZING' | 'COMPANY' | 'WRITING' | 'DONE'>('IDLE');
-  const [launchState, setLaunchState] = useState<'IDLE' | 'CHECKING_LEADS' | 'SUPPRESSION' | 'LIMITS' | 'QUEUEING' | 'DONE'>('IDLE');
+  const [launchState, setLaunchState] = useState<'IDLE' | 'CHECKING_LEADS' | 'SUPPRESSION' | 'LIMITS' | 'QUEUEING' | 'DONE' | 'ERROR'>('IDLE');
   const [isSaving, setIsSaving] = useState(false);
   const [saveComplete, setSaveComplete] = useState(false);
   const [typedContent, setTypedContent] = useState('');
+  const [launchResult, setLaunchResult] = useState('');
+
+  // Email accounts for launch modal
+  const [showLaunchModal, setShowLaunchModal] = useState(false);
+  const [emailAccounts, setEmailAccounts] = useState<{id: string; fromName: string; fromEmail: string}[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [isLaunching, setIsLaunching] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_URL}/email-accounts`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'SUCCESS') {
+          setEmailAccounts(d.data);
+          if (d.data.length > 0) setSelectedAccountId(d.data[0].id);
+        }
+      })
+      .catch(() => {});
+  }, []);
   
   const [steps, setSteps] = useState([
     { id: 1, type: 'email', title: 'Initial Email', delay: 'Day 1' },
@@ -50,13 +71,34 @@ export default function CampaignDetailsPage() {
     if (typedContent) setEmailContent(typedContent);
   }, [typedContent]);
 
-  // Launch Campaign Animation
-  const handleLaunch = () => {
+  // Real Campaign Launch — calls backend API
+  const handleLaunch = async () => {
+    if (emailAccounts.length === 0) {
+      setShowLaunchModal(true); // show modal even if no accounts (to show error state)
+      return;
+    }
+    setShowLaunchModal(false);
     setLaunchState('CHECKING_LEADS');
-    setTimeout(() => setLaunchState('SUPPRESSION'), 1500);
-    setTimeout(() => setLaunchState('LIMITS'), 3000);
-    setTimeout(() => setLaunchState('QUEUEING'), 4500);
-    setTimeout(() => setLaunchState('DONE'), 6000);
+    setIsLaunching(true);
+    try {
+      setTimeout(() => setLaunchState('SUPPRESSION'), 800);
+      setTimeout(() => setLaunchState('LIMITS'), 1600);
+      setTimeout(() => setLaunchState('QUEUEING'), 2400);
+
+      const res = await fetch(`${API_URL}/campaigns/${campaignId}/launch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailAccountId: selectedAccountId }),
+      });
+      const data = await res.json();
+      setLaunchResult(data.message || '');
+      setLaunchState(data.status === 'SUCCESS' ? 'DONE' : 'ERROR');
+    } catch (err: any) {
+      setLaunchResult(err.message || 'Network error');
+      setLaunchState('ERROR');
+    } finally {
+      setIsLaunching(false);
+    }
   };
 
   const handleSave = () => {
@@ -103,7 +145,7 @@ export default function CampaignDetailsPage() {
             : saveComplete ? <svg className="h-5 w-5 text-[#22C55E]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg> 
             : 'Save'}
           </button>
-          <button onClick={handleLaunch} className="px-6 py-2 bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] hover:from-[#2563EB] hover:to-[#0891B2] shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-sm font-bold rounded-xl transition-all flex items-center gap-2 btn-press">
+          <button onClick={() => setShowLaunchModal(true)} className="px-6 py-2 bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] hover:from-[#2563EB] hover:to-[#0891B2] shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white text-sm font-bold rounded-xl transition-all flex items-center gap-2 btn-press">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Launch Campaign
           </button>
@@ -225,7 +267,28 @@ export default function CampaignDetailsPage() {
         </div>
       </div>
 
-      {/* Campaign Launch Modal Animation */}
+      {/* Launch Account Picker Modal */}
+      {showLaunchModal && launchState === 'IDLE' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080D1A]/90 backdrop-blur-md animate-scale-in">
+          <div className="bg-[#111827] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-[#1E293B] p-8">
+            <h3 className="text-xl font-bold text-[#F8FAFC] mb-2">Launch Campaign</h3>
+            <p className="text-sm text-[#94A3B8] mb-6">Select which email account to send from.</p>
+            {emailAccounts.length === 0 ? (
+              <p className="text-sm text-[#EF4444] mb-6">No email accounts found. <a href="/email-accounts" className="text-[#3B82F6] underline">Add one first.</a></p>
+            ) : (
+              <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)} className="w-full bg-[#151E30] border border-[#1E293B] rounded-lg px-3 py-2.5 text-[#F8FAFC] text-sm mb-6 focus:outline-none focus:border-[#3B82F6]">
+                {emailAccounts.map(a => <option key={a.id} value={a.id}>{a.fromName} &lt;{a.fromEmail}&gt;</option>)}
+              </select>
+            )}
+            <div className="flex gap-3">
+              <button onClick={() => setShowLaunchModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] text-sm font-medium transition-colors">Cancel</button>
+              <button onClick={handleLaunch} disabled={emailAccounts.length === 0} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] text-white text-sm font-bold transition-all disabled:opacity-50">Launch</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Campaign Launch Progress Modal */}
       {launchState !== 'IDLE' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080D1A]/90 backdrop-blur-md animate-scale-in">
            <div className="bg-[#111827] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-[#1E293B] text-center p-8 relative">
@@ -238,9 +301,21 @@ export default function CampaignDetailsPage() {
                     <svg className="w-12 h-12 text-[#22C55E]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                   </div>
                   <h3 className="text-2xl font-bold text-[#F8FAFC] mb-2">Campaign is now running</h3>
-                  <p className="text-[#94A3B8] mb-8">Emails will be dispatched according to your schedule and sending limits.</p>
+                  <p className="text-[#94A3B8] mb-2">{launchResult}</p>
+                  <p className="text-[#94A3B8] mb-8 text-sm">Emails have been dispatched via your SMTP account.</p>
                   <button onClick={() => setLaunchState('IDLE')} className="px-6 py-3 bg-[#151E30] text-[#F8FAFC] font-semibold rounded-xl hover:bg-[#1E293B] border border-[#1E293B] transition-colors btn-press">
                     Return to Campaign
+                  </button>
+                </div>
+              ) : launchState === 'ERROR' ? (
+                <div className="animate-fade-in-up">
+                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[#EF4444]/10 flex items-center justify-center border-4 border-[#EF4444]/20">
+                    <svg className="w-12 h-12 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-[#F8FAFC] mb-2">Launch Failed</h3>
+                  <p className="text-[#94A3B8] mb-8 text-sm">{launchResult}</p>
+                  <button onClick={() => setLaunchState('IDLE')} className="px-6 py-3 bg-[#EF4444]/10 text-[#EF4444] font-semibold rounded-xl hover:bg-[#EF4444]/20 border border-[#EF4444]/20 transition-colors btn-press">
+                    Close
                   </button>
                 </div>
               ) : (
@@ -254,10 +329,10 @@ export default function CampaignDetailsPage() {
                   
                   <div className="space-y-4 text-left">
                     {[
-                      { state: 'CHECKING_LEADS', label: 'Checking 1,250 Leads' },
+                      { state: 'CHECKING_LEADS', label: 'Checking Leads & Recipients' },
                       { state: 'SUPPRESSION', label: 'Verifying Suppression List' },
                       { state: 'LIMITS', label: 'Checking SMTP Sending Limits' },
-                      { state: 'QUEUEING', label: 'Queueing Initial Emails' }
+                      { state: 'QUEUEING', label: 'Sending Emails via SMTP' }
                     ].map((step, i) => {
                       const states = ['CHECKING_LEADS', 'SUPPRESSION', 'LIMITS', 'QUEUEING'];
                       const currentIndex = states.indexOf(launchState);

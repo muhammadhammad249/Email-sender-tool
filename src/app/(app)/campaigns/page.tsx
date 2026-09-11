@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
+import { PageSearchBar } from '@/components/shared/PageSearchBar';
 
 const initialCampaigns = [
   { id: '1', name: 'Q3 Enterprise Outreach', status: 'RUNNING', sent: 1250, opened: 450, replied: 23, bounced: 12 },
@@ -11,9 +12,18 @@ const initialCampaigns = [
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState(initialCampaigns);
+  const [filteredCampaigns, setFilteredCampaigns] = useState(initialCampaigns);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCampaignName, setNewCampaignName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  const handleSearch = (value: string) => {
+    if (!value.trim()) { setFilteredCampaigns(campaigns); return; }
+    setFilteredCampaigns(campaigns.filter(c =>
+      c.name.toLowerCase().includes(value.toLowerCase()) ||
+      c.status.toLowerCase().includes(value.toLowerCase())
+    ));
+  };
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +47,9 @@ export default function CampaignsPage() {
             <h1 className="text-3xl font-extrabold tracking-tight text-[#F8FAFC]">Campaigns</h1>
             <p className="mt-2 text-[#94A3B8]">Manage your email outreach campaigns, track performance, and automate follow-ups.</p>
           </div>
-          <div className="mt-4 sm:mt-0 flex-shrink-0">
-            <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center justify-center rounded-xl bg-[#3B82F6] px-6 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:bg-[#2563EB] transition-all duration-200 btn-press">
+          <div className="mt-4 sm:mt-0 flex items-center gap-3">
+            <PageSearchBar placeholder="Search campaigns..." onSearch={handleSearch} />
+            <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center justify-center rounded-xl bg-[#3B82F6] px-6 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:bg-[#2563EB] transition-all duration-200 btn-press whitespace-nowrap">
               + Create Campaign
             </button>
           </div>
@@ -46,7 +57,11 @@ export default function CampaignsPage() {
 
         {/* Campaigns Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {campaigns.map((campaign, i) => (
+          {filteredCampaigns.length === 0 ? (
+            <div className="col-span-3 py-16 text-center text-[#94A3B8] text-sm">
+              No campaigns match your search.
+            </div>
+          ) : filteredCampaigns.map((campaign, i) => (
             <div 
               key={campaign.id} 
               className="group relative overflow-hidden rounded-2xl bg-[#111827]/80 backdrop-blur-xl border border-[#1E293B] shadow-xl hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col card-hover animate-fade-in-up"

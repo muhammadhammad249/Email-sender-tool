@@ -19,6 +19,7 @@ import authRoutes from './routes/auth.routes';
 import campaignRoutes from './routes/campaigns.routes';
 import emailAccountRoutes from './routes/email-accounts.routes';
 import leadRoutes from './routes/leads.routes';
+import emailRoutes from './routes/emails.routes';
 
 app.get('/', (_req, res) => {
   res.status(200).json({ success: true, message: 'Email Sender Backend is running' });
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/email-accounts', emailAccountRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/emails', emailRoutes);
 
 // ── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {

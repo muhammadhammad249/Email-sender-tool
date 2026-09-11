@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { PageSearchBar } from '@/components/shared/PageSearchBar';
 
 export default function AiTemplatesPage() {
   const [accessGranted, setAccessGranted] = useState(false);
@@ -25,8 +26,15 @@ export default function AiTemplatesPage() {
       </div>
 
       <div className="mb-8 animate-fade-in-up">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[#F8FAFC]">AI Templates</h1>
-        <p className="mt-2 text-[#94A3B8]">Pre-built AI prompts and email templates for higher conversion.</p>
+        <div className="sm:flex sm:items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#F8FAFC]">AI Templates</h1>
+            <p className="mt-2 text-[#94A3B8]">Pre-built AI prompts and email templates for higher conversion.</p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <PageSearchBar placeholder="Search templates..." />
+          </div>
+        </div>
       </div>
       <div className="bg-[#111827]/80 backdrop-blur-xl border border-[#1E293B] rounded-2xl p-12 text-center animate-fade-in-up delay-1">
         <div className="w-16 h-16 rounded-full bg-[#151E30] mx-auto flex items-center justify-center mb-4 border border-[#1E293B]">

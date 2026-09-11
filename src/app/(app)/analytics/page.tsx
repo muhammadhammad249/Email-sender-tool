@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
+import { PageSearchBar } from '@/components/shared/PageSearchBar';
 
 export default function AnalyticsPage() {
   const [mounted, setMounted] = useState(false);
@@ -19,7 +20,8 @@ export default function AnalyticsPage() {
             <h1 className="text-3xl font-extrabold tracking-tight text-[#F8FAFC]">Analytics</h1>
             <p className="mt-2 text-[#94A3B8]">Deep dive into your outreach performance and conversion metrics.</p>
           </div>
-          <div className="mt-4 sm:mt-0 flex gap-3">
+          <div className="mt-4 sm:mt-0 flex items-center gap-3">
+            <PageSearchBar placeholder="Search analytics..." />
              <select className="bg-[#111827] border border-[#1E293B] text-[#F8FAFC] text-sm rounded-xl px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#3B82F6] transition-colors shadow-lg">
                <option>Last 30 Days</option>
                <option>Last 90 Days</option>

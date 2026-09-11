@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef } from 'react';
+import { PageSearchBar } from '@/components/shared/PageSearchBar';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -117,9 +118,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Header */}
-      <div className="mb-8 animate-fade-in-up">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[#F8FAFC]">Settings</h1>
-        <p className="mt-2 text-[#94A3B8]">Manage your account, billing, and workspace preferences.</p>
+      <div className="sm:flex sm:items-center justify-between mb-8 animate-fade-in-up">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#F8FAFC]">Settings</h1>
+          <p className="mt-2 text-[#94A3B8]">Manage your account, billing, and workspace preferences.</p>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <PageSearchBar placeholder="Search settings..." />
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 animate-fade-in-up delay-1">
